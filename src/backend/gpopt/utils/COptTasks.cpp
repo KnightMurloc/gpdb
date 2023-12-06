@@ -502,6 +502,7 @@ COptTasks::OptimizeTask(void *ptr)
 	{
 		CMDCache::Reset();
 		CMDCache::SetCacheQuota(optimizer_mdcache_size * 1024L);
+		gpdb::UnMarkMDCacheAsTransient();
 	}
 	else if (CMDCache::ULLGetCacheQuota() !=
 			 (ULLONG) optimizer_mdcache_size * 1024L)
