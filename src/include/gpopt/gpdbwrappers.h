@@ -710,17 +710,24 @@ void GPDBMemoryContextDelete(MemoryContext context);
 
 bool IsTypeRange(Oid typid);
 
-TransactionId GetHeapTupleHeaderXmin(HeapTupleHeaderData *header);
+//TransactionId GetHeapTupleHeaderXmin(HeapTupleHeaderData *header);
+//
+//bool GPDBTransactionIdPrecedes(TransactionId id1, TransactionId id2);
+//
+//TransactionId GetTransactionXmin();
+//
+//bool GPDBTransactionIdIsValid(TransactionId xid);
+//
+//void SetMDCacheTransactionXmin(TransactionId xid);
+//
+//TransactionId GetMDCacheTransactionXmin();
+void MarkMDCacheAsTransient();
 
-bool GPDBTransactionIdPrecedes(TransactionId id1, TransactionId id2);
+void UnMarkMDCacheAsTransient();
 
-TransactionId GetTransactionXmin();
+bool IsMDCacheTransient();
 
-bool GPDBTransactionIdIsValid(TransactionId xid);
-
-void SetMDCacheTransactionXmin(TransactionId xid);
-
-TransactionId GetMDCacheTransactionXmin();
+bool IsIndexVisible(Relation index_rel);
 }  //namespace gpdb
 
 #define ForEach(cell, l) \
