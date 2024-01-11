@@ -90,7 +90,7 @@ jobs:
         run: |
           yum install -y epel-release
           yum install -y abi-dumper
-          yum install -y libzstd-static
+          yum install -y 'https://github.com/KnightMurloc/zstd/releases/download/123/libzstd-static-1.4.4-1.el8.x86_64.rpm'
 
       - name: Build Greenplum
         run: |
