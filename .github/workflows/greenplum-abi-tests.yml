@@ -90,6 +90,7 @@ jobs:
         run: |
           yum install -y epel-release
           yum install -y abi-dumper
+          yum install -y libzstd-static
 
       - name: Build Greenplum
         run: |
