@@ -94,7 +94,8 @@ jobs:
           path: gpdb_src
       - name: Checkout submodules
         run: |
-          cd gpdb_src/gpdb && git submodule update --init --recursive
+          ls -a gpdb_src
+          cd gpdb_src && git submodule update --init --recursive
       - name: Install abi-dumper
         run: |
           yum install -y epel-release
