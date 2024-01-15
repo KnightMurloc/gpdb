@@ -90,10 +90,11 @@ jobs:
         with:
           repository: ${{ matrix.repo }}
           ref: ${{ matrix.ref }}
-          submodules: recursive
           fetch-depth: 0 # Specify '0' to fetch all history for all branches and tags.
           path: gpdb_src
-
+      - name: Checkout submodules
+        run: |
+          git submodule update --init --recursive
       - name: Install abi-dumper
         run: |
           yum install -y epel-release
