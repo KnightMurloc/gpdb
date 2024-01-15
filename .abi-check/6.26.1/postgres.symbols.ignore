@@ -1,6 +1,12 @@
 ConfigureNamesBool_gp
+ConfigureNamesInt_gp
 segment_failure_due_to_fault_injector
+gp_gang_creation_retry_non_recovery
 CatalogIndexInsert
 CatalogUpdateIndexes
 rel_needs_long_lock
 XLogInsert_OverrideXid
+toast_insert_or_update
+toast_insert_or_update_memtup
+UpdateMasterAosegTotalsFromSegments
+XLogArchiveMode
