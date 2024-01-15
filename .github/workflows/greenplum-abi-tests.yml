@@ -101,6 +101,8 @@ jobs:
 
       - name: Build Greenplum
         run: |
+          git submodule init
+          git submodule update 
           ## TODO: Since abi-dumper requires debug info and it's hard to inject CFLAGS via the script for
           ## releasing Greenplum, we have to manually configure it here. Probably we can improve it in future.
           export PATH=/opt/python-3.9.13/bin:/opt/python-2.7.18/bin:$PATH
@@ -158,6 +160,7 @@ jobs:
 
       - name: Compare ABI
         run: |
+          cat exception_lists/postgres.symbols.ignore | tee $GITHUB_OUTPUT
           SKIP_POSTGRES_SYMBOLS_LIST="exception_lists/postgres.symbols.ignore"
           SKIP_POSTGRES_SYMBOLS_OPTION=""
           if [[ -f "$SKIP_POSTGRES_SYMBOLS_LIST" ]]; then
