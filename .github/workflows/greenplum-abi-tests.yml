@@ -158,17 +158,18 @@ jobs:
 
       - name: Compare ABI
         run: |
-          cat exception_lists/postgres.symbols.ignore | tee $GITHUB_OUTPUT
           SKIP_POSTGRES_SYMBOLS_LIST="exception_lists/postgres.symbols.ignore"
           SKIP_POSTGRES_SYMBOLS_OPTION=""
           if [[ -f "$SKIP_POSTGRES_SYMBOLS_LIST" ]]; then
             SKIP_POSTGRES_SYMBOLS_OPTION="-skip-symbols ${SKIP_POSTGRES_SYMBOLS_LIST}"
           fi
-          SKIP_POSTGRES_TYPES_LIST="exception_lists/postgres.types.ignore"
           SKIP_POSTGRES_TYPES_OPTION=""
           if [[ -f "$SKIP_POSTGRES_TYPES_LIST" ]]; then
             SKIP_POSTGRES_TYPES_OPTION="-skip-types ${SKIP_POSTGRES_TYPES_LIST}"
           fi
+          echo ${SKIP_POSTGRES_SYMBOLS_OPTION} | tee $GITHUB_OUTPUT
+          ls -a | tee $GITHUB_OUTPUT
+          pwd | tee $GITHUB_OUTPUT
           abi-compliance-checker ${SKIP_POSTGRES_SYMBOLS_OPTION} \
                                  ${SKIP_POSTGRES_TYPES_OPTION} \
                                  -lib postgres \
