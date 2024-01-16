@@ -84,18 +84,17 @@ jobs:
           tar -xf uctags-2023.07.05-linux-x86_64.tar.xz
           cp uctags-2023.07.05-linux-x86_64/bin/* /usr/bin/
           which ctags
-
+          yum install -y centos-release-scl-rh
+          yum install -y rh-git227-git
+          source scl_source enable rh-git227
       - name: Download Greenplum source code
         uses: actions/checkout@v3
         with:
           repository: ${{ matrix.repo }}
           ref: ${{ matrix.ref }}
+          submodules: recursive
           fetch-depth: 0 # Specify '0' to fetch all history for all branches and tags.
           path: gpdb_src
-      - name: Checkout submodules
-        run: |
-          ls -a gpdb_src
-          cd gpdb_src && git submodule update --init --recursive
       - name: Install abi-dumper
         run: |
           yum install -y epel-release
