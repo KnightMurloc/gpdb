@@ -84,9 +84,8 @@ jobs:
           tar -xf uctags-2023.07.05-linux-x86_64.tar.xz
           cp uctags-2023.07.05-linux-x86_64/bin/* /usr/bin/
           which ctags
-          yum install -y centos-release-scl-rh
-          yum install -y rh-git227-git
-          source scl_source enable rh-git227
+          yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
+          yum install -y git
       - name: Download Greenplum source code
         uses: actions/checkout@v3
         with:
