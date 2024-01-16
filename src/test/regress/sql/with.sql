@@ -1065,3 +1065,60 @@ WITH cte1 AS (
 SELECT * FROM cte1 a JOIN cte1 b USING (c1);
 
 DROP TABLE t1;
+
+-- Ensure that prefetch is not disabled for HashJoin in case of join at single segment.
+-- Test Shared Scan producer is executed under inner part of join first and the
+-- deadlock between Shared Scans does not occur
+SET optimizer = off;
+--start_ignore
+DROP TABLE IF EXISTS d;
+--end_ignore
+CREATE TABLE d (c1 int, c2 int) DISTRIBUTED BY (c1);
+
+INSERT INTO d VALUES ( 2, 0 ),( 2, 0 );
+
+WITH cte AS (
+	SELECT count(*) c1 FROM d
+) SELECT * FROM cte a JOIN (SELECT * FROM d JOIN cte USING (c1) LIMIT 1) b USING (c1);
+
+RESET optimizer;
+DROP TABLE d;
+
+-- Test if sharing is disabled for a SegmentGeneral CTE to avoid deadlock if CTE is
+-- executed with 1-gang and joined with n-gang
+SET optimizer = off;
+--start_ignore
+DROP TABLE IF EXISTS d;
+DROP TABLE IF EXISTS r;
+--end_ignore
+
+CREATE TABLE d (a int, b int) DISTRIBUTED BY (a);
+INSERT INTO d VALUES ( 1, 2 ),( 2, 3 );
+CREATE TABLE r (a int, b int) DISTRIBUTED REPLICATED;
+INSERT INTO r VALUES ( 1, 2 ),( 3, 4 );
+
+EXPLAIN (COSTS off)
+WITH cte AS (
+    SELECT count(*) a FROM r
+) SELECT * FROM cte JOIN (SELECT * FROM d JOIN cte USING (a) LIMIT 1) d_join_cte USING (a);
+
+WITH cte AS (
+    SELECT count(*) a FROM r
+) SELECT * FROM cte JOIN (SELECT * FROM d JOIN cte USING (a) LIMIT 1) d_join_cte USING (a);
+
+-- Test if sharing is disabled for a General CTE to avoid deadlock if CTE is
+-- executed with coordinator gang and joined with n-gang
+EXPLAIN (COSTS OFF)
+WITH cte AS (
+	SELECT count(*) a FROM (VALUES ( 1, 2 ),( 3, 4 )) v
+)
+SELECT * FROM cte JOIN (SELECT * FROM d JOIN cte USING (a) LIMIT 1) d_join_cte USING (a);
+
+WITH cte AS (
+    SELECT count(*) a FROM (VALUES ( 1, 2 ),( 3, 4 )) v
+)
+SELECT * FROM cte JOIN (SELECT * FROM d JOIN cte USING (a) LIMIT 1) d_join_cte USING (a);
+
+RESET optimizer;
+DROP TABLE d;
+DROP TABLE r;

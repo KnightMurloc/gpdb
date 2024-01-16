@@ -1,0 +1,6 @@
+ConfigureNamesBool_gp
+segment_failure_due_to_fault_injector
+CatalogIndexInsert
+CatalogUpdateIndexes
+rel_needs_long_lock
+XLogInsert_OverrideXid

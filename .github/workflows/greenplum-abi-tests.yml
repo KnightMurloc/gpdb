@@ -28,6 +28,7 @@ jobs:
       BASELINE_VERSION: ${{ steps.vars.outputs.BASELINE_VERSION }}
       ABI_LIBS: ${{ steps.vars.outputs.ABI_LIBS }}
       ABI_HEADERS: ${{ steps.vars.outputs.ABI_HEADERS }}
+      EXCEPTION_LISTS_COUNT: ${{ steps.check_exception_lists.outputs.EXCEPTION_LISTS_COUNT }}
     steps:
       - name: Fetch source
         uses: actions/checkout@v3
@@ -35,7 +36,7 @@ jobs:
       - name: Get Greenplum version variables
         id: vars
         run: |
-          remote_repo='https://github.com/greenplum-db/gpdb.git'
+          remote_repo='https://github.com/arenadata/gpdb.git'
           git ls-remote --tags --refs --sort='v:refname' $remote_repo '6.*' | tail -n 1  > baseline_version_ref
           baseline_ref=$(cat baseline_version_ref | awk '{print $1}')
           baseline_version=$(cat baseline_version_ref | awk '{print $2}')
@@ -44,7 +45,14 @@ jobs:
           echo "ABI_LIBS=postgres" | tee -a $GITHUB_OUTPUT
           echo "ABI_HEADERS=." | tee -a $GITHUB_OUTPUT
 
+      - name: Check if exception list exists
+        id: check_exception_lists
+        run: |
+          exception_lists_count=$(ls .abi-check/${{ steps.vars.outputs.BASELINE_VERSION }}/ 2> /dev/null | wc -l)
+          echo "EXCEPTION_LISTS_COUNT=${exception_lists_count}" | tee -a $GITHUB_OUTPUT
+
       - name: Upload symbol/type checking exception list
+        if: steps.check_exception_lists.outputs.EXCEPTION_LISTS_COUNT != '0'
         uses: actions/upload-artifact@v3
         with:
           name: exception_lists
@@ -53,7 +61,7 @@ jobs:
   abi-dump:
     needs: abi-dump-setup
     runs-on: ubuntu-latest
-    container: gcr.io/data-gpdb-public-images/gpdb6-rocky8-build
+    container: gcr.io/data-gpdb-public-images/gpdb6-centos7-build
     strategy:
       matrix:
         name:
@@ -61,7 +69,7 @@ jobs:
           - build-latest
         include:
           - name: build-baseline
-            repo: greenplum-db/gpdb
+            repo: arenadata/gpdb
             ref: ${{ needs.abi-dump-setup.outputs.BASELINE_VERSION }}
           - name: build-latest
             repo: ${{ github.repository }}
@@ -76,7 +84,8 @@ jobs:
           tar -xf uctags-2023.07.05-linux-x86_64.tar.xz
           cp uctags-2023.07.05-linux-x86_64/bin/* /usr/bin/
           which ctags
-
+          yum install -y https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
+          yum install -y git
       - name: Download Greenplum source code
         uses: actions/checkout@v3
         with:
@@ -85,11 +94,11 @@ jobs:
           submodules: recursive
           fetch-depth: 0 # Specify '0' to fetch all history for all branches and tags.
           path: gpdb_src
-
       - name: Install abi-dumper
         run: |
           yum install -y epel-release
           yum install -y abi-dumper
+          yum install -y libzstd-static
 
       - name: Build Greenplum
         run: |
@@ -122,7 +131,7 @@ jobs:
       - abi-dump-setup
       - abi-dump
     runs-on: ubuntu-latest
-    container: gcr.io/data-gpdb-public-images/gpdb6-rocky8-build
+    container: gcr.io/data-gpdb-public-images/gpdb6-centos7-build
     steps:
       - name: Download baseline
         uses: actions/download-artifact@v3
@@ -136,6 +145,7 @@ jobs:
           path: build-latest/
 
       - name: Download exception lists
+        if: needs.abi-dump-setup.outputs.EXCEPTION_LISTS_COUNT != '0'
         uses: actions/download-artifact@v3
         with:
           name: exception_lists
@@ -145,7 +155,7 @@ jobs:
         run: |
           yum install -y epel-release
           yum install -y abi-compliance-checker
-          yum install -y --enablerepo=powertools lynx
+          yum install -y lynx
 
       - name: Compare ABI
         run: |
@@ -154,7 +164,6 @@ jobs:
           if [[ -f "$SKIP_POSTGRES_SYMBOLS_LIST" ]]; then
             SKIP_POSTGRES_SYMBOLS_OPTION="-skip-symbols ${SKIP_POSTGRES_SYMBOLS_LIST}"
           fi
-          SKIP_POSTGRES_TYPES_LIST="exception_lists/postgres.types.ignore"
           SKIP_POSTGRES_TYPES_OPTION=""
           if [[ -f "$SKIP_POSTGRES_TYPES_LIST" ]]; then
             SKIP_POSTGRES_TYPES_OPTION="-skip-types ${SKIP_POSTGRES_TYPES_LIST}"
